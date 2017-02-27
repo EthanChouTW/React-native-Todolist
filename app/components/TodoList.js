@@ -1,14 +1,70 @@
 import React from 'react';
+import {connect} from 'react-redux';
 import Icon from 'react-native-vector-icons/Octicons';
-import {StyleSheet, Text, View, TouchableOpacity} from 'react-native';
-var TodoList = React.createClass({
-    onLogout() {
+import {StyleSheet, Text, View, TouchableOpacity, ScrollView, RefreshControl} from 'react-native';
+import {unAuthUser, getTodos, deleteTodo} from '../actions';
+import NewTodo from './NewTodo'; 
 
+var TodoItem = connect()(React.createClass({
+    getInitialState() {
+        return {
+            deleting: false
+        }
     },
-    addNewTodo() {
-
+    onDelete() {
+        this.setState({deleting: true});
+        this.props.dispatch(deleteTodo(this.props.id));
     },
     render() {
+        var renderDeleteButton = () => {
+            if (!this.state.deleting) {
+                return (
+                    <TouchableOpacity onPress={this.onDelete}>
+                        <Icon name="x" size={15} color='#2ecc71' ></Icon>
+                    </TouchableOpacity>
+                )
+            }
+        }
+        return (
+            <View style={styles.todoContainer}>
+                <Text>{this.props.text}</Text>
+                {renderDeleteButton()}
+            </View>
+        )
+    }
+}))
+
+var TodoList = React.createClass({
+    getInitialState() {
+        return {
+            refreshing: false
+        }
+    },
+    onLogout() {
+        this.props.dispatch(unAuthUser);
+    },
+    addNewTodo() {
+        this.props.navigator.push({
+            component: NewTodo,
+            title: 'New Todo',
+            navigationBarHidden: true
+        })
+    },
+    onRefresh() {
+        this.setState({refreshing: true});
+        this.props.dispatch(getTodos).then(() => {
+            this.setState({refreshing: false});
+        })
+    },
+    render() {
+        console.log("todos",this.props.todos);
+        var renderTodos = () => {
+             return this.props.todos.map((todo) => {
+                 return (
+                     <TodoItem key={todo._id} text={todo.text} id={todo._id}></TodoItem> 
+                 )
+             })
+        }
         return (
             <View style={styles.container}>
                 <View style={styles.topBar}>
@@ -23,11 +79,23 @@ var TodoList = React.createClass({
                           <Icon name="plus" size={20} color="white" ></Icon>
                     </TouchableOpacity>
                 </View>
+                <ScrollView refreshControl={
+                        <RefreshControl refreshing={this.state.refreshing}
+                            onRefresh={this.onRefresh}>
+                        </RefreshControl>
+                    }
+                    automaticallyAdjustContentInsets={false}
+                    contentContainerStyle={styles.scrollViewContainer}
+                    > 
+                    {renderTodos()}
+                </ScrollView>
             </View>
 
         )
     }
 });
+
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -48,6 +116,23 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 20
 
+    },
+    todoContainer: {
+        padding: 16,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        marginTop: -1,
+        borderColor: '#ccc',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center'
     }
 });
-module.exports = TodoList;
+
+var mapStateToProps = (state) => {
+    return {
+        todos: state.todos
+    }
+}
+
+module.exports = connect(mapStateToProps)(TodoList);

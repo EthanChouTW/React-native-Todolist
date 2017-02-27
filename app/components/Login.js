@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'flex-start',
         alignItems: 'stretch',
-        backgroundColor: '#aaa',
+        backgroundColor: '#2ecc71',
         paddingTop: 30
     },
     titleContainer: {
@@ -106,7 +106,9 @@ const styles = StyleSheet.create({
     },
     title: {
         color: 'white',
-        fontSize: 35
+        fontSize: 35,
+        marginTop: 20,
+        marginBottom: 20
     },
     field: {
         borderRadius: 5,
